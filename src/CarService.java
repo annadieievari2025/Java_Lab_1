@@ -1,7 +1,7 @@
 import java.util.HashSet;
 import java.util.Set;
 
-public class CarServiceManager {
+public class CarService {
     private final Set<Car> cars = new HashSet<>();
 
     public void registerCar(Car car) {
