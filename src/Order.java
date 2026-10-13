@@ -1,4 +1,3 @@
-import javax.smartcardio.CardException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,6 +16,9 @@ public class Order {
     private ServicePost post;
 
     public Order(Car car) {
+        if (car == null) {
+            throw new CarServiceException("Car cannot be null");
+        }
         this.id = idCounter++;
         this.car = car;
         this.status = OrderStatus.CREATED;
@@ -31,20 +33,27 @@ public class Order {
     }
 
     public void addJob(Job job) {
-        if (status != OrderStatus.CREATED) {
+        if (!OrderStatus.CREATED.equals(status)) {
             throw new CarServiceException("Cannot add job to order in status " + status);
+        }
+        if (job == null) {
+            throw new CarServiceException("Job cannot be null");
         }
         jobs.add(job);
     }
 
     public void addPart(Part part) {
-        if (status != OrderStatus.CREATED && status != OrderStatus.IN_PROGRESS) {
+        if (!OrderStatus.CREATED.equals(status) && !OrderStatus.IN_PROGRESS.equals(status)) {
             throw new CarServiceException("Cannot add part to order in status " + status);
         }
+        if (part == null) {
+            throw new CarServiceException("Part cannot be null");
+        }
+        parts.add(part);
     }
 
-    public void approve () {
-        if (status != OrderStatus.CREATED) {
+    public void approve() {
+        if (!OrderStatus.CREATED.equals(status)) {
             throw new CarServiceException("Cannot approve order in status " + status);
         }
         if (jobs.isEmpty()) {
@@ -54,10 +63,18 @@ public class Order {
     }
 
     public void assignResources(Mechanic mechanic, ServicePost post) {
-        if (status != OrderStatus.APPROVED) {
+        if (!OrderStatus.APPROVED.equals(status)) {
             throw new CarServiceException("Cannot assign resources to order in status " + status);
         }
 
+        if (mechanic == null || post == null) {
+            throw new CarServiceException("Mechanic and post cannot be null");
+        }
+        if (this.mechanic != null) {
+            throw new CarServiceException("Resources already assigned");
+        }
+        if (mechanic.isBusy()) throw new CarServiceException("Mechanic is busy");
+        if (post.isBusy()) throw new CarServiceException("Service post is busy");
         mechanic.assignWork();
         post.occupy();
 
@@ -66,7 +83,7 @@ public class Order {
     }
 
     public void startExecution() {
-        if (status != OrderStatus.APPROVED) {
+        if (!OrderStatus.APPROVED.equals(status)) {
             throw new CarServiceException("Cannot start execution in status " + status);
         }
         if (this.mechanic == null || this.post == null) {
@@ -74,8 +91,9 @@ public class Order {
         }
         this.status = OrderStatus.IN_PROGRESS;
     }
-    public void completeJob (Job job) {
-        if (status != OrderStatus.IN_PROGRESS) {
+
+    public void completeJob(Job job) {
+        if (!OrderStatus.IN_PROGRESS.equals(status)) {
             throw new CarServiceException("Cannot complete job in status " + status);
         }
         if (!jobs.contains(job)) {
@@ -84,7 +102,20 @@ public class Order {
         job.markAsCompleted();
     }
 
-    public void releaseResources() {
+    public void completeOrder() {
+        if (!OrderStatus.IN_PROGRESS.equals(status)) {
+            throw new CarServiceException("Cannot complete order in status " + status);
+        }
+        for (Job job : jobs) {
+            if (!job.isCompleted()) {
+                throw new CarServiceException("Cannot complete order: not all jobs are completed");
+            }
+        }
+        this.status = OrderStatus.COMPLETED;
+        releaseResources();
+    }
+
+    private void releaseResources() {
         if (this.mechanic != null) {
             this.mechanic.releaseFromWork();
         }

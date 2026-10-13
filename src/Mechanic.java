@@ -1,5 +1,5 @@
 public class Mechanic {
-    private String name;
+    private final String name;
     private boolean isBusy = false;
 
     public Mechanic(String name) {
@@ -8,7 +8,7 @@ public class Mechanic {
 
     public boolean isBusy() { return isBusy; }
 
-    public void assignWork () {
+    public void assignWork() {
         if (isBusy) {
             throw new CarServiceException("Mechanic is busy");
         }

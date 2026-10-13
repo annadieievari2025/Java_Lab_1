@@ -11,8 +11,8 @@ public class ServicePost {
     public void occupy() {
         if (isBusy) {
             throw new CarServiceException("Service post is busy");
-            this.isBusy = true;
         }
+        this.isBusy = true;
     }
 
     public void release() {
